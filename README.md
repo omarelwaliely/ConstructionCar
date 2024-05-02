@@ -1,8 +1,8 @@
 ### TODO
 
 - [x] Connect Wiring
-- [ ] Do Basic Movement Car
-- [ ] Move with Phone (For testing purposes)
+- [x] Do Basic Movement Car
+- [x] Move with Phone (For testing purposes)
 - [ ] Robotic Arm Movement
 - [ ] Create logic for secondary controller
 - [ ] Add saftey measure for H-Bridge / Dagu
