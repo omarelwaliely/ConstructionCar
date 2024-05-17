@@ -47,6 +47,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 uint8_t direction = 'x';
+uint8_t honk = 0;
 volatile uint8_t flag =0;
 /* USER CODE END PV */
 
@@ -57,7 +58,11 @@ static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+void delay_micro (int time)
+{
+	__HAL_TIM_SET_COUNTER(&htim1,0);
+	while (__HAL_TIM_GET_COUNTER(&htim1) < time); 
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -137,10 +142,16 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 99); //100% duty cycle (full motor power)
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 65535); //100% duty cycle (full motor power)
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 99); //100% duty cycle (full motor power)
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 65535); //100% duty cycle (full motor power)
 	__HAL_UART_ENABLE_IT(&huart1,UART_IT_RXNE);
+	__HAL_UART_ENABLE_IT(&huart2,UART_IT_RXNE);
+	__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_3, TIM_INPUTCHANNELPOLARITY_RISING);
+
+	HAL_TIM_Base_Start(&htim1);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11,GPIO_PIN_RESET);
+	__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_3, TIM_INPUTCHANNELPOLARITY_RISING);
 
   /* USER CODE END 2 */
 
@@ -148,28 +159,45 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		if(flag){ //on rxne interrupt
-			flag = 0;
-			moveStop();
-			HAL_Delay(500);
-			switch(direction){
-				case 'f':
-					moveForward();
-					break;
-				case 'b':
-					moveBackward();
-					break;
-				case 'l':
-					moveLeft();
-					break;
-				case 'r':
-					moveRight();
-					break;
-				case 's':
-					//moveStop(); we already stopped so no real need for this
-					break;
-			}
+		if(honk){
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET);
 		}
+		else{
+					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
+		}
+		//else{
+		//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
+
+		//}
+		delay_micro(1);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+		delay_micro(10);
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+		HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
+		HAL_Delay(1000);
+
+		//if(flag){ //on rxne interrupt
+		//	flag = 0;
+		//	moveStop();
+		//	HAL_Delay(500);
+		//	switch(direction){
+		//		case 'f':
+		//			moveForward();
+		//			break;
+		//		case 'b':
+		//			moveBackward();
+		//			break;
+		//		case 'l':
+		//			moveLeft();
+		//			break;
+		//		case 'r':
+		//			moveRight();
+		//			break;
+		//		case 's':
+		//			//moveStop(); we already stopped so no real need for this
+		//			break;
+		//	}
+		//}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -252,6 +280,7 @@ static void MX_TIM1_Init(void)
 
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_IC_InitTypeDef sConfigIC = {0};
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
 
   /* USER CODE BEGIN TIM1_Init 1 */
@@ -260,11 +289,19 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 7;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 99;
+  htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -286,7 +323,20 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_5) != HAL_OK)
   {
     Error_Handler();
   }
@@ -399,20 +449,20 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7|GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|LD3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|LD3_Pin|GPIO_PIN_4, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PA4 PA5 PA12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_12;
+  /*Configure GPIO pins : PA4 PA5 PA7 PA12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB0 LD3_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|LD3_Pin;
+  /*Configure GPIO pins : PB0 LD3_Pin PB4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|LD3_Pin|GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
