@@ -217,16 +217,16 @@ void TIM1_CC_IRQHandler(void)
   /* USER CODE BEGIN TIM1_CC_IRQn 0 */
 	volatile float distance;
 		if(!timercheck){ 
-		wait_rising = HAL_TIM_ReadCapturedValue(&htim1,TIM_CHANNEL_3);
-		__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_3, TIM_INPUTCHANNELPOLARITY_FALLING);
+		wait_rising = HAL_TIM_ReadCapturedValue(&htim1,TIM_CHANNEL_2);
+		__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_FALLING);
 		timercheck = 1;
 	} else {
-		wait_falling = HAL_TIM_ReadCapturedValue(&htim1,TIM_CHANNEL_3);
-		__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_3, TIM_INPUTCHANNELPOLARITY_RISING);
+		wait_falling = HAL_TIM_ReadCapturedValue(&htim1,TIM_CHANNEL_2);
+		__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
 		distance = 0.034*(wait_falling - wait_rising)/2.0;
 		timercheck = 0;
 		sprintf(distbuf, "dist: %f\r\n",distance);
-		HAL_UART_Transmit(&huart2, (uint8_t *)distbuf, sizeof(distbuf), 10);
+		//HAL_UART_Transmit(&huart2, (uint8_t *)distbuf, sizeof(distbuf), 10);
 		if(distance <=50){
 				honk =1;
 		}
@@ -271,7 +271,8 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-
+	//HAL_UART_Receive(&huart2, &direction, 1, 1000);
+	//flag = 1;
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */

@@ -110,7 +110,7 @@ void moveStop(){ //we can also stop pwm instead if we want
 
 /**
   * @brief  The application entry point.
-  * @retval int
+  * @retval ints
   */
 int main(void)
 {
@@ -147,11 +147,11 @@ int main(void)
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 65535); //100% duty cycle (full motor power)
 	__HAL_UART_ENABLE_IT(&huart1,UART_IT_RXNE);
 	__HAL_UART_ENABLE_IT(&huart2,UART_IT_RXNE);
-	__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_3, TIM_INPUTCHANNELPOLARITY_RISING);
+	__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
 
 	HAL_TIM_Base_Start(&htim1);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11,GPIO_PIN_RESET);
-	__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_3, TIM_INPUTCHANNELPOLARITY_RISING);
+	__HAL_TIM_SET_CAPTUREPOLARITY(&htim1, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
 
   /* USER CODE END 2 */
 
@@ -165,39 +165,35 @@ int main(void)
 		else{
 					HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
 		}
-		//else{
-		//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
-
-		//}
 		delay_micro(1);
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
 		delay_micro(10);
 		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
-		HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
-		HAL_Delay(1000);
+		HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
+		HAL_Delay(1);
 
-		//if(flag){ //on rxne interrupt
-		//	flag = 0;
-		//	moveStop();
-		//	HAL_Delay(500);
-		//	switch(direction){
-		//		case 'f':
-		//			moveForward();
-		//			break;
-		//		case 'b':
-		//			moveBackward();
-		//			break;
-		//		case 'l':
-		//			moveLeft();
-		//			break;
-		//		case 'r':
-		//			moveRight();
-		//			break;
-		//		case 's':
-		//			//moveStop(); we already stopped so no real need for this
-		//			break;
-		//	}
-		//}
+		if(flag){ //on rxne interrupt
+			flag = 0;
+			moveStop();
+			HAL_Delay(500);
+			switch(direction){
+				case 'f':
+					moveForward();
+					break;
+				case 'b':
+					moveBackward();
+					break;
+				case 'l':
+					moveLeft();
+					break;
+				case 'r':
+					moveRight();
+					break;
+				case 's':
+					//moveStop(); we already stopped so no real need for this
+					break;
+			}
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -301,10 +297,6 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_OC_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
@@ -327,16 +319,11 @@ static void MX_TIM1_Init(void)
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
   sConfigIC.ICFilter = 0;
-  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigOC.OCMode = TIM_OCMODE_TIMING;
-  if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_5) != HAL_OK)
   {
     Error_Handler();
   }
