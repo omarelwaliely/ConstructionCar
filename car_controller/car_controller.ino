@@ -4,10 +4,10 @@
 #define BACKWARD_BUTTON 10
 #define RIGHT_BUTTON 11
 #define LEFT_BUTTON 12
-#define UP_BUTTON A0
-#define DOWN_BUTTON A1
-#define OPEN_BUTTON A2
-#define CLOSE_BUTTON A3
+#define UP_BUTTON 6
+#define DOWN_BUTTON 5
+#define OPEN_BUTTON 4
+#define CLOSE_BUTTON 3
 
 volatile unsigned long lastDebounceTime = 0;
 volatile unsigned long debounceDelay = DEBOUNCE_TIME;
@@ -22,8 +22,8 @@ volatile bool openPressed = false;
 volatile bool closePressed = false;
 
 void setup() {
-  Serial.begin(9600);
-  while (!Serial);
+  // Serial.begin(9600);
+  // while (!Serial);
   Serial1.begin(9600);
 
   pinMode(FORWARD_BUTTON, INPUT_PULLUP);
@@ -48,14 +48,14 @@ void setup() {
 void loop() {
 
 
-  while (Serial1.available()) {
-    char c = Serial1.read();
-    Serial.print(c); 
-  }
-  while(Serial.available()){
-    char c = Serial.read();
-    Serial1.print(c); 
-  }
+  // while (Serial1.available()) {
+  //   char c = Serial1.read();
+  //   Serial.print(c); 
+  // }
+  // while(Serial.available()){
+  //   char c = Serial.read();
+  //   Serial1.print(c); 
+  // }
 
   if (forwardPressed) {
     if (digitalRead(FORWARD_BUTTON) == LOW) {
@@ -109,6 +109,8 @@ void loop() {
   if (upPressed) {
     if (digitalRead(UP_BUTTON) == LOW) {
       Serial.println("Up button pressed.");
+      Serial1.println("u");
+
     } else {
       Serial.println("Up button released.");
     }
@@ -118,6 +120,8 @@ void loop() {
   if (downPressed) {
     if (digitalRead(DOWN_BUTTON) == LOW) {
       Serial.println("Down button pressed.");
+      Serial1.println("d");
+
     } else {
       Serial.println("Down button released.");
     }
@@ -127,6 +131,8 @@ void loop() {
   if (openPressed) {
     if (digitalRead(OPEN_BUTTON) == LOW) {
       Serial.println("Open button pressed.");
+      Serial1.println("o");
+
     } else {
       Serial.println("Open button released.");
     }
@@ -136,6 +142,8 @@ void loop() {
   if (closePressed) {
     if (digitalRead(CLOSE_BUTTON) == LOW) {
       Serial.println("Close button pressed.");
+      Serial1.println("c");
+
     } else {
       Serial.println("Close button released.");
     }
