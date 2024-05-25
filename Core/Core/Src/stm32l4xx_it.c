@@ -46,6 +46,8 @@
 extern uint8_t direction;
 extern volatile uint8_t flag;
 extern uint8_t honk;
+extern uint8_t claw;
+extern volatile uint8_t claw_flag;
 int timercheck =0;
 int wait_rising =0;
 int wait_falling =0;
@@ -227,7 +229,7 @@ void TIM1_CC_IRQHandler(void)
 		timercheck = 0;
 		sprintf(distbuf, "dist: %f\r\n",distance);
 		//HAL_UART_Transmit(&huart2, (uint8_t *)distbuf, sizeof(distbuf), 10);
-		if(distance <=50){
+		if(distance <=50 && distance > 0){
 				honk =1;
 		}
 		else{
@@ -254,6 +256,9 @@ void USART1_IRQHandler(void)
 	 HAL_UART_Receive(&huart1, &direction, 1, 1000);
 	if((direction=='f' ||direction=='b' || direction=='l' || direction=='r' || direction =='s')){ //iphone always sends an arrow for some reason so ignore non expected values
 			 flag = 1;
+	}
+	else if (direction=='o' ||direction=='c' || direction=='u' || direction=='d' ){
+			claw_flag = 1;
 	}
 	 else{
 		 direction = temp;
